@@ -1,12 +1,12 @@
 #
 # Author:   ShermanZero
-# Version:  1.1.1
+# Version:  1.2
 #
 
 import obspython as obs
 from pathlib import Path
 
-version = "1.1.1"
+version = "1.2"
 
 class LiveTime:
     def __init__(self,source_name=None):
@@ -35,7 +35,10 @@ class LiveTime:
                         self.hoursLive += 1
                         self.minutesLive = 0
 
-            timeLive = self.get_formatted_time()
+            if(Data._visible_ and not Data._timerRunning_):
+                timeLive = ""
+            else:
+                timeLive = self.get_formatted_time()
 
             #prevent more work being done than necessary
             if(timeLive == self.lastTimeLive and not force):
@@ -81,6 +84,8 @@ class Data:
     _autoStart_ = False
     _autoStop_ = False
     _recording_ = False
+    _visible_ = False
+    _timerRunning_ = False
 
 liveTime = LiveTime()
 callback = liveTime.update_text
@@ -89,11 +94,14 @@ callback = liveTime.update_text
 
 def start_timer():
     stop_timer()
+    Data._timerRunning_ = True
     obs.timer_add(callback, 1 * 1000)
 
 def stop_timer():
+    Data._timerRunning_ = False
     obs.timer_remove(callback)
     liveTime.reset_timer()
+
 
 
 # --------------------------- callbacks ---------------------------------------------
@@ -130,7 +138,7 @@ def on_event(event):
 
 # -------------------------------------- script methods ----------------------------------------
 
-desc = '<HTML><body><center><h2>LiveTime</h2><h5>v'+version+'</h5></center><center><a href="https://twitch.tv/shermanzero">ShermanZero</a> © 2021</center><p>A timer to display your uptime.  Options to automatically start and stop with your stream/recording are available.  Text formatting is also available as seen below, and is case-sensitive.<p>Simply create a text source, link it here, specify how the timer is formatted, and that\'s it.<p><br>Available formatting variables:<p><ul><li>{h} or {hh}</li><li>{m} or {mm}<li>{s} or {ss}</li></ul>Variables will display the hours, minutes, and seconds of the timer respectively.  Using the {hh}, {mm}, or {ss} variations will ensure a double-digit output (e.g "04").</body><br>v1.1 Patch Notes:<ul><li>Added {hh} {mm} {ss} as formatting options</li></ul><br>v'+version+' Patch Notes:<ul><li>Fixed multiple Start Timer presses causes faster counting</li><li></li></ul></HTML>'
+desc = '<HTML><body><center><h2>LiveTime</h2><h5>v'+version+'</h5></center><center><a href="https://twitch.tv/shermanzero">ShermanZero</a> © 2021</center><p>A timer to display your uptime.  Options to automatically start and stop with your stream/recording are available.  Text formatting is also available as seen below, and is case-sensitive.<p>Simply create a text source, link it here, specify how the timer is formatted, and that\'s it.<p><br>Available formatting variables:<p><ul><li>{h} or {hh}</li><li>{m} or {mm}<li>{s} or {ss}</li></ul>Variables will display the hours, minutes, and seconds of the timer respectively.  Using the {hh}, {mm}, or {ss} variations will ensure a double-digit output (e.g "04").</body><br><center><a href="https://github.com/ShermanZero/LiveTime/blob/main/patchnotes.txt">Patch Notes</a></center></body></HTML>'
 def script_description():
     return desc
 
@@ -140,6 +148,7 @@ def script_update(settings):
     Data._autoStart_ = obs.obs_data_get_bool(settings, "auto_start")
     Data._autoStop_ = obs.obs_data_get_bool(settings, "auto_stop")
     Data._recording_ = obs.obs_data_get_bool(settings, "recording")
+    Data._visible_ = obs.obs_data_get_bool(settings, "visible")
 
     #force the text to update and do not increment the timer
     liveTime.update_text(True, False)
@@ -170,6 +179,7 @@ def script_properties():
     obs.obs_properties_add_bool(props, "auto_start", "Start Automatically with Stream/Recording")
     obs.obs_properties_add_bool(props, "auto_stop", "Stop Automatically with Stream/Recording")
     obs.obs_properties_add_bool(props, "recording", "Enable for Recording")
+    obs.obs_properties_add_bool(props, "visible", "Text Visible Only While Timer Running")
 
     return props
 
@@ -179,6 +189,7 @@ def script_load(settings):
     Data._autoStart_ = obs.obs_data_get_bool(settings, "auto_start")
     Data._autoStop_ = obs.obs_data_get_bool(settings, "auto_stop")
     Data._recording_ = obs.obs_data_get_bool(settings, "recording")
+    Data._visible_ = obs.obs_data_get_bool(settings, "visible")
 
     if not Data._format_:
         Data._format_ = Data._defaultFormat_
@@ -187,3 +198,4 @@ def script_load(settings):
     obs.obs_data_set_bool(settings, "auto_start", Data._autoStart_)
     obs.obs_data_set_bool(settings, "auto_stop", Data._autoStop_)
     obs.obs_data_set_bool(settings, "recording", Data._recording_)
+    obs.obs_data_set_bool(settings, "visible", Data._visible_)
