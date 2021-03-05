@@ -1,0 +1,11 @@
+##Patch Notes
+
+###v1.2
+- Added option to display timer only when running
+- Moved patch notes to GitHub instead of displaying in the properties window
+
+###v1.1.1
+- Fixed multiple Start Timer presses causes faster counting
+
+###v1.1
+- Added {hh} {mm} {ss} as formatting options
